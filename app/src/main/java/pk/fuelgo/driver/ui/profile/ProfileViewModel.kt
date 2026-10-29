@@ -1,0 +1,88 @@
+package pk.fuelgo.driver.ui.profile
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import pk.fuelgo.driver.data.remote.ApiResult
+import pk.fuelgo.driver.data.remote.dto.DriverProfileDto
+import pk.fuelgo.driver.data.repository.AuthRepository
+import pk.fuelgo.driver.data.repository.DriverRepository
+
+private const val MIN_PASSWORD_LENGTH = 8
+
+data class ProfileUiState(
+    val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
+    val profile: DriverProfileDto? = null,
+    val errorMessage: String? = null,
+    val loggedOut: Boolean = false,
+    val showChangePassword: Boolean = false,
+    val currentPassword: String = "",
+    val newPassword: String = "",
+    val isChangingPassword: Boolean = false,
+    val changePasswordMessage: String? = null,
+)
+
+class ProfileViewModel(
+    private val driverRepository: DriverRepository,
+    private val authRepository: AuthRepository,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(ProfileUiState())
+    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+
+    init {
+        load()
+    }
+
+    fun refresh() {
+        val s = _uiState.value
+        if (s.isLoading || s.isRefreshing) return
+        load(silent = true)
+    }
+
+    fun load(silent: Boolean = false) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = !silent, isRefreshing = silent, errorMessage = null) }
+            when (val result = driverRepository.getProfile()) {
+                is ApiResult.Success -> _uiState.update { it.copy(isLoading = false, isRefreshing = false, profile = result.data) }
+                is ApiResult.Error -> _uiState.update { it.copy(isLoading = false, isRefreshing = false, errorMessage = result.message) }
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.logout()
+            _uiState.update { it.copy(loggedOut = true) }
+        }
+    }
+
+    fun openChangePassword() =
+        _uiState.update { it.copy(showChangePassword = true, currentPassword = "", newPassword = "", changePasswordMessage = null) }
+
+    fun closeChangePassword() = _uiState.update { it.copy(showChangePassword = false) }
+    fun setCurrentPassword(value: String) = _uiState.update { it.copy(currentPassword = value) }
+    fun setNewPassword(value: String) = _uiState.update { it.copy(newPassword = value) }
+
+    fun submitChangePassword() {
+        val s = _uiState.value
+        if (s.currentPassword.isBlank() || s.newPassword.length < MIN_PASSWORD_LENGTH) {
+            _uiState.update { it.copy(changePasswordMessage = "Enter your current password and a new password of at least $MIN_PASSWORD_LENGTH characters.") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isChangingPassword = true, changePasswordMessage = null) }
+            when (val result = authRepository.changePassword(s.currentPassword, s.newPassword)) {
+                is ApiResult.Success -> _uiState.update {
+                    it.copy(isChangingPassword = false, showChangePassword = false, changePasswordMessage = null)
+                }
+                is ApiResult.Error -> _uiState.update { it.copy(isChangingPassword = false, changePasswordMessage = result.message) }
+            }
+        }
+    }
+}
