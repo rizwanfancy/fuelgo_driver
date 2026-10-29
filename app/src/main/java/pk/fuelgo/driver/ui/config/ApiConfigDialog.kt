@@ -28,7 +28,7 @@ import pk.fuelgo.driver.ui.fuelGoViewModel
  */
 @Composable
 fun ApiConfigDialog(onDismiss: () -> Unit) {
-    val viewModel = fuelGoViewModel { ApiConfigViewModel(it.apiConfigManager, it.orderRepository) }
+    val viewModel = fuelGoViewModel { ApiConfigViewModel(it.apiConfigManager, it.authRepository) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     AlertDialog(

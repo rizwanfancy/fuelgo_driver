@@ -31,7 +31,7 @@ jobs:
           gradle-version: "8.7"
 
       # Decode the release keystore from a repo secret into a file on the runner.
-      # The raw .keystore file is never committed to git — see KEYSTORE-INFO.txt
+      # The raw .keystore file is never committed to git — see README.md
       # for how to create this secret from fuelgo-release.keystore.base64.txt.
       - name: Decode release keystore
         env:
@@ -39,7 +39,7 @@ jobs:
         run: |
           if [ -z "$RELEASE_KEYSTORE_BASE64" ]; then
             echo "::error::RELEASE_KEYSTORE_BASE64 secret is not set. Add the four" \
-                 "RELEASE_KEYSTORE_* secrets described in KEYSTORE-INFO.txt before" \
+                 "RELEASE_KEYSTORE_* secrets described in README.md before" \
                  "pushing, otherwise the signed release build cannot run."
             exit 1
           fi

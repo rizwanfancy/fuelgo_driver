@@ -44,6 +44,9 @@ class AuthRepository(
         return result
     }
 
+    /** Anonymous reachability check used by the API Configuration screen. */
+    suspend fun checkConnection(): ApiResult<Unit> = safeApiCall { api.health() }
+
     suspend fun changePassword(currentPassword: String, newPassword: String): ApiResult<ApiMessageDto> =
         safeApiCall { api.changePassword(ChangePasswordRequest(currentPassword, newPassword)) }
 

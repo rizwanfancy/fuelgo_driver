@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pk.fuelgo.driver.data.local.ApiConfigManager
 import pk.fuelgo.driver.data.remote.ApiResult
-import pk.fuelgo.driver.data.repository.OrderRepository
+import pk.fuelgo.driver.data.repository.AuthRepository
 
 data class ApiConfigUiState(
     val baseUrlInput: String = "",
@@ -22,7 +22,7 @@ data class ApiConfigUiState(
 
 class ApiConfigViewModel(
     private val apiConfigManager: ApiConfigManager,
-    private val orderRepository: OrderRepository,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ApiConfigUiState())
@@ -76,7 +76,7 @@ class ApiConfigViewModel(
             apiConfigManager.saveBaseUrl(s.baseUrlInput)
             apiConfigManager.saveTenantSlug(s.tenantSlugInput)
 
-            when (val result = orderRepository.getFuelTypes()) {
+            when (val result = authRepository.checkConnection()) {
                 is ApiResult.Success -> _uiState.update {
                     it.copy(isTesting = false, testResultMessage = "Connected successfully.", testResultIsSuccess = true)
                 }

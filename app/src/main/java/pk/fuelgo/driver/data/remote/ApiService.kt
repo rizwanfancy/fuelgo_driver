@@ -29,6 +29,10 @@ import retrofit2.http.Path
 // interceptors, so none of these calls pass them explicitly.
 interface ApiService {
 
+    // --- Health (anonymous) ---------------------------------------------
+    @GET("health")
+    suspend fun health(): Response<Unit>
+
     // --- Auth ---------------------------------------------------------
     @POST("Auth/login")
     suspend fun login(@Body body: LoginRequest): Response<AuthResponseDto>
